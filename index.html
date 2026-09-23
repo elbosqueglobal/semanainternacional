@@ -869,16 +869,19 @@ function showError(msg) {
 }
 
 function getState(ev) {
+  if (ev.estado === 'cancelado') return 'cancelado';
+  if (ev.estado === 'aplazado')  return 'aplazado';
+  if (!ev.fecha_inicio || !ev.fecha_fin) {
+    return ev.cupos_cerrados ? 'sin_cupos' : 'registro';
+  }
   var now        = new Date();
   var start      = new Date(ev.fecha_inicio);
   var end        = new Date(ev.fecha_fin);
   var earlyOpen  = 30 * 60 * 1000;
   var graceClose = 60 * 60 * 1000;
-  if (ev.estado === 'cancelado') return 'cancelado';
-  if (ev.estado === 'aplazado')  return 'aplazado';
   if (now.getTime() >= start.getTime() - earlyOpen &&
       now.getTime() <= end.getTime()   + graceClose) return 'asistencia';
-  if (now < start) return 'registro';
+  if (now < start) return ev.cupos_cerrados ? 'sin_cupos' : 'registro';
   return 'finalizado';
 }
 
@@ -973,6 +976,7 @@ function buildCard(ev) {
   else if (ev.tipo === 'limited') typeBadge = '<span class="badge b-lim">Cupos limitados</span>';
   else if (ev.tipo === 'private') typeBadge = '<span class="badge b-priv">Privado</span>';
   else if (ev.tipo === 'bazar')   typeBadge = '<span class="badge b-bazar">Bazar</span>';
+  if (st === 'sin_cupos') typeBadge = '<span class="badge b-agotado">Sin cupos</span>';
 
   var stateBadge = '';
   if (st === 'asistencia') stateBadge = '<span class="badge b-live">&#9679; En vivo</span>';
@@ -1499,6 +1503,13 @@ document.addEventListener('DOMContentLoaded', function() {
   loadSemanaAndEvents();
   subscribeToChanges();
   setInterval(function(){ renderAll(); }, 60000);
+setInterval(function(){
+  if (currentSemana) {
+    db.from('eventos').select('*')
+      .eq('semana_id', currentSemana.id).eq('activo', true)
+      .then(function(r){ if (!r.error && r.data) processAndRenderEvents(r.data); });
+  }
+}, 90000);
 });
 
 </script>

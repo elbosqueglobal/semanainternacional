@@ -206,6 +206,7 @@ body{
 .b-fac  {background:rgba(184,134,11,.1);color:#7a5a00}
 .b-en   {background:rgba(90,122,90,.12);color:var(--sage)}
 .b-lim  {background:rgba(155,34,38,.1);color:var(--minhwa)}
+.b-agotado{background:#e8e4df;color:#888}
 .b-priv {background:#f0f0f4;color:#888}
 .b-bazar{background:rgba(184,134,11,.12);color:var(--gold)}
 .b-live {background:#c0392b;color:#fff;font-size:.64rem;font-weight:700;
@@ -987,6 +988,8 @@ function buildCard(ev) {
   var actionBtn = '';
   if (st === 'registro') {
     actionBtn = '<button class="btn-action btn-reg" onclick="openModal(\''+ev.id+'\',\'registro\')">Registrarme</button>';
+    } else if (st === 'sin_cupos') {
+    actionBtn = '<button class="btn-action btn-done" disabled>Sin cupos disponibles</button>';
   } else if (st === 'asistencia') {
     actionBtn = '<button class="btn-action btn-asis" onclick="openModal(\''+ev.id+'\',\'asistencia\')">Marcar asistencia</button>';
   } else if (st === 'aplazado' || st === 'cancelado') {

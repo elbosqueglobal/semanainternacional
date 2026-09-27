@@ -753,6 +753,7 @@ var misInscState   = false;
 var eventsLoaded   = false;
 
 var currentEventId   = null;
+var currentDia       = null; // rastrea el tab activo
 var currentMode      = null;
 var currentFlow      = null;
 var currentWalkInDoc = null;
@@ -787,6 +788,8 @@ function loadSemanaAndEvents() {
 }
 
 function processAndRenderEvents(evArray) {
+  var prevDiaKeys = DIA_KEYS.slice(); // copia de días actuales ANTES de procesar
+
   EVENTS_BY_DAY = {};
   evArray.forEach(function(ev) {
     var d = ev.dia || 'sin-dia';
@@ -806,8 +809,23 @@ function processAndRenderEvents(evArray) {
     return aE ? -1 : (bE ? 1 : (a < b ? -1 : 1));
   });
   eventsLoaded = true;
-  renderTabs();
-  renderAll();
+
+  // Solo reconstruir tabs si los días cambiaron (primera carga o nuevo evento)
+  var diasChanged = prevDiaKeys.length !== DIA_KEYS.length ||
+    DIA_KEYS.some(function(d, i) { return d !== prevDiaKeys[i]; });
+
+  if (diasChanged) {
+    renderTabs();
+    renderAll();
+    // Restaurar tab activo si todavía existe, o primer tab si es carga inicial
+    if (currentDia && DIA_KEYS.indexOf(currentDia) !== -1) {
+      switchDay(currentDia);
+    }
+    // Si currentDia es null (primera carga), switchDay ya se fijó en renderTabs
+  } else {
+    // Los días no cambiaron — solo actualizar el contenido sin tocar los tabs
+    renderAll();
+  }
 }
 
 function subscribeToChanges() {
@@ -906,6 +924,7 @@ function renderTabs() {
 }
 
 function switchDay(day) {
+  currentDia = day; // siempre guardar el tab activo
   var tabs   = document.querySelectorAll('.day-tab');
   var panels = document.querySelectorAll('.day-panel');
   var i;
@@ -1502,14 +1521,14 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('click',function(){closeCalMenus();});
   loadSemanaAndEvents();
   subscribeToChanges();
-  setInterval(function(){ renderAll(); }, 60000);
+  setInterval(function(){ renderAll(); }, 120000); // 2min — re-evalúa estados de asistencia
 setInterval(function(){
   if (currentSemana) {
     db.from('eventos').select('*')
       .eq('semana_id', currentSemana.id).eq('activo', true)
       .then(function(r){ if (!r.error && r.data) processAndRenderEvents(r.data); });
   }
-}, 90000);
+}, 300000);
 });
 
 </script>
